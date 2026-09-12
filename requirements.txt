@@ -1,0 +1,43 @@
+# ==============================================================================
+# DANH SÁCH THƯ VIỆN DỰ ÁN: CHATBOT AI GIÁM SÁT NGƯỜI CAO TUỔI (LOCAL EDGE AI)
+# ==============================================================================
+# Kiến trúc: Local 100% Offline, Tiết kiệm tài nguyên, Hỗ trợ Huấn luyện Tăng cường
+
+# --- 1. Lớp Cảm biến, Xử lý Tín hiệu & Machine Learning (Sensor ML) ---
+numpy>=1.24.3
+pandas>=2.0.0
+scikit-learn>=1.3.0
+joblib>=1.3.2
+scipy>=1.11.0               # Xử lý tín hiệu âm thanh, lọc nhiễu & Resampling 16kHz
+xgboost>=2.0.0              # Mô hình học máy tăng cường (Gradient Boosting)
+
+# --- 2. Xử lý Giọng nói Tiếng Việt Đa tầng (Multi-Engine Speech STT & TTS) ---
+SpeechRecognition>=3.10.0   # Tầng STT 1: Nhận diện giọng nói Tiếng Việt độ chính xác ~99%
+vosk>=0.3.45                # Tầng STT 2: Mô hình Kaldi Tiếng Việt chạy Offline 100% không cần mạng
+faster-whisper>=1.0.2       # Tầng STT 3: Whisper tối ưu CTranslate2 chạy nhẹ trên CPU
+audioop-lts>=0.2.0          # Module xử lý byte âm thanh tương thích Python 3.13+
+pyttsx3>=2.90               # Chuyển văn bản thành giọng nói offline (TTS)
+
+# --- 3. Lớp RAG (Retrieval-Augmented Generation) & Cơ sở dữ liệu Tri thức ---
+langchain>=0.2.0
+langchain-community>=0.2.0
+langchain-huggingface>=0.0.3
+chromadb>=0.5.0             # Vector Database cục bộ
+sentence-transformers>=2.7.0 # Trích xuất vector embedding ngữ nghĩa y tế
+
+# --- 4. Huấn luyện Tăng cường & Tinh chỉnh Mô hình (RLHF & Model Fine-Tuning) ---
+datasets>=2.18.0            # Quản lý tập dữ liệu câu hỏi - phản hồi
+trl>=0.8.0                  # Transformer Reinforcement Learning (DPO / PPO)
+peft>=0.10.0                # Parameter-Efficient Fine-Tuning (LoRA / QLoRA)
+
+# --- 5. Tương tác với Local LLM (Ollama) & HTTP Client ---
+requests>=2.31.0
+ollama>=0.2.1
+
+# --- 6. Backend RESTful API & Server Cục bộ ---
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.7.0
+
+# --- 7. Giao diện Người dùng Dashboard (Frontend) ---
+streamlit>=1.35.0

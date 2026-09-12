@@ -1,0 +1,37 @@
+# Python compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# Large Model Weights (Exceeds GitHub 100MB file size limit)
+models/whisper/
+models/vosk/
+
+# Databases & Vector cache
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+chroma_db/
+
+# Audio temporary speech files
+data/audio/*.wav
+*.wav
+
+# Logs & temporary run files
+*.log
+system_logs.txt
+data/training_data/auto_training.log
+
+# Environment variables & API credentials
+.env
+.env.local
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
