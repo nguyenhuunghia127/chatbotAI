@@ -4,12 +4,17 @@ COMPONENT: KHUNG XEM NHẬT KÝ SỰ KIỆN CẢM BIẾN (SYSTEM AUDIT LOGS)
 Dự án: Trợ lý AI Giám sát và Chăm sóc Y tế Người cao tuổi AuraCare
 """
 
-from typing import Callable, List, Dict, Any
+from typing import Callable, List, Dict, Any, Protocol
+
+
+class LogFetcher(Protocol):
+    def __call__(self, limit: int = 40, level_filter: str = "ALL") -> List[Dict[str, Any]]:
+        ...
 
 
 def render_logs_viewer(
     st_module,
-    get_logs_fn: Callable[[int, str], List[Dict[str, Any]]],
+    get_logs_fn: Callable[..., List[Dict[str, Any]]] | LogFetcher,
     simulate_telemetry_fn: Callable[[], Any]
 ):
     """Vẽ bộ lọc nhật ký và danh sách thẻ sự kiện thời gian thực."""
