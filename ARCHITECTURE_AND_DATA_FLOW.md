@@ -259,16 +259,37 @@ d:\chatbotAi\
 │   ├── sensor_rf_model.joblib   # Mô hình Random Forest phân loại trạng thái cảm biến
 │   └── README.md                # Hướng dẫn tải các mô hình giọng nói lớn (Whisper / Vosk)
 │
-├── src/                         # MÃ NGUỒN CÁC MODULE CHỨC NĂNG
+├── src/                         # MÃ NGUỒN CÁC MODULE CHỨC NĂNG (CLEAN MODULAR ARCHITECTURE)
+│   ├── core/                    # Tầng Cốt lõi & Cấu hình tập trung
+│   │   ├── __init__.py
+│   │   └── config.py            # Quản lý tập trung mọi Path, Hằng số sinh hiệu, Port, LLM Key
+│   ├── rag/                     # Phân hệ Compound 8-in-1 MedRAG Chống Bịa Đặt
+│   │   ├── __init__.py
+│   │   ├── rag_engine.py        # Master Orchestrator (< 250 dòng điều phối 8 giai đoạn)
+│   │   ├── prompts.py           # Quản lý System Prompts, hướng dẫn bác sĩ & Disclaimer
+│   │   ├── deterministic_engine.py # Cây quyết định lâm sàng ngoại tuyến 100% (Edge Fail-Safe)
+│   │   ├── retriever.py         # Hybrid Retriever điều phối Chroma Dense & TF-IDF Sparse
+│   │   ├── local_vector_retriever.py # Bộ lập chỉ mục & tìm kiếm Cosine Similarity 300 chunks
+│   │   ├── query_transformer.py # Chuẩn hóa khẩu ngữ & Mở rộng Multi-Query
+│   │   ├── reranker.py          # Advanced Clinical Cross-Reranker đa nhân tố
+│   │   ├── corrective_rag.py    # CRAG Pre-Grading & Post-generation Self-RAG
+│   │   ├── medical_graph_rag.py # Medical Knowledge Graph & Multi-hop Reasoning
+│   │   └── medical_tools.py     # OpenAI-Compatible Tool Calling Registry
+│   ├── ui/                      # Phân hệ Giao diện Người dùng Modular (Streamlit)
+│   │   ├── __init__.py
+│   │   ├── styles.py            # Hệ thống theme Dark Glassmorphism, Google Fonts, CSS
+│   │   └── components/          # Các khối UI tái sử dụng
+│   │       ├── __init__.py
+│   │       ├── vitals_card.py   # Header banner và Lưới 4 thẻ sinh hiệu thông minh
+│   │       ├── chat_box.py      # Hộp chat, badge RAG, Micro STT và Modal RLHF
+│   │       ├── logs_viewer.py   # Bộ lọc và thanh cuộn xem System Audit Logs
+│   │       └── sidebar.py       # CSDL bệnh nhân, người hỏi, Edge Nodes và Báo động 115
 │   ├── api/
 │   │   └── main_api.py          # Chi tiết cài đặt các API Endpoints FastAPI
 │   ├── db/
 │   │   └── db_service.py        # Dịch vụ thao tác CSDL SQLite (bảng logs, alerts, rlhf)
 │   ├── nlu/
 │   │   └── intent_classifier.py # Lõi phân loại ý định NLU, kiểm tra khẩn cấp & keyword matching
-│   ├── rag/
-│   │   ├── local_vector_retriever.py # Bộ lập chỉ mục & tìm kiếm Cosine Similarity 300 chunks
-│   │   └── rag_engine.py        # Điều phối 4 tầng RAG, giao tiếp xKiro API & Edge Fail-Safe
 │   ├── sensor_ml/
 │   │   ├── sensor_classifier.py # Tiền xử lý & dự đoán trạng thái cảm biến sinh học
 │   │   └── train_model.py       # Script huấn luyện Random Forest với Data Augmentation

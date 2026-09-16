@@ -78,6 +78,9 @@ class ChatResponse(BaseModel):
     sources: List[str]
     engine: str
     timestamp: str
+    tools_used: Optional[List[str]] = Field(default_factory=list, description="Danh sách công cụ y tế đã kích hoạt")
+    rerank_scores: Optional[List[Dict[str, Any]]] = Field(default_factory=list, description="Điểm tái xếp hạng lâm sàng")
+    disclaimer: Optional[str] = Field(None, description="Khuyến cáo pháp lý y khoa tiêu chuẩn")
     latest_logs_snapshot: Optional[str] = None
 
 
@@ -174,6 +177,9 @@ def chat_with_ai(req: ChatRequest):
             sources=result["sources"],
             engine=result["engine"],
             timestamp=result["timestamp"],
+            tools_used=result.get("tools_used", []),
+            rerank_scores=result.get("rerank_scores", []),
+            disclaimer=result.get("disclaimer"),
             latest_logs_snapshot=result.get("latest_logs_snapshot", "")
         )
     except Exception as e:

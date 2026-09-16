@@ -161,18 +161,24 @@ flowchart TD
 
 ---
 
-### 4.2. Phân hệ RAG Chống Bịa Đặt (Anti-Hallucination RAG Engine)
-* **Vị trí file**: `src/rag/rag_engine.py`
-* **Triết lý Chống Ảo giác**: AI không được phép "suy diễn vu vơ" về sức khỏe người già. Câu trả lời bắt buộc phải được neo chặt (grounded) vào 3 nguồn sự thật:
+### 4.2. Phân hệ Compound MedRAG Siêu Cấp (8-in-1 Clinical AI Architecture)
+* **Vị trí file**: `src/rag/rag_engine.py`, `src/rag/medical_graph_rag.py`, `src/rag/query_transformer.py`, `src/rag/corrective_rag.py`, `src/rag/medical_tools.py`, `src/rag/reranker.py`
+* **Triết lý Chống Ảo giác (Anti-Hallucination Guardrails)**: AI không bao giờ được phép "suy diễn vu vơ" về sức khỏe người già. Câu trả lời bắt buộc phải được neo chặt (grounded) vào 3 nguồn sự thật:
   1. **Hồ sơ bệnh nhân & Người bảo hộ** (CSDL SQLite đồng bộ qua `data/medical_docs/patient_profile.txt`).
   2. **Cẩm nang sơ cứu y khoa lão khoa** (`data/medical_docs/elderly_first_aid.txt`).
   3. **Nhật ký cảm biến trạm biên thời gian thực** (`system_logs.txt`).
-* **Vector Store & Embeddings**:
-  * Lưu trữ vector tại thư mục `chroma_db/` sử dụng thư viện **ChromaDB**.
-  * Chuyển đổi văn bản bằng mô hình `sentence-transformers/all-MiniLM-L6-v2` hoặc tương đương.
+* **Hợp nhất 8 Kiến trúc RAG Hiện đại Nhất (Compound AI)**:
+  1. **Medical GraphRAG (`medical_graph_rag.py`)**: Đồ thị tri thức y tế lâm sàng thuần Python suy luận bắc cầu đa bước (Multi-hop Reasoning), truy vết tự động các chuỗi dị ứng/tương tác thuốc phức tạp (ví dụ: `Augmentin` $\to$ `Amoxicillin` $\to$ `Penicillin` $\to$ Dị ứng $\to$ CẤM).
+  2. **Query Transformation RAG (`query_transformer.py`)**: Chuẩn hóa khẩu ngữ dân gian, tiếng nói địa phương từ micro STT thành thuật ngữ y khoa và sinh Multi-Query mở rộng.
+  3. **Corrective RAG - CRAG (`corrective_rag.py`)**: Đánh giá độ tin cậy của tài liệu trước khi sinh (`CORRECT`, `AMBIGUOUS`, `INCORRECT`).
+  4. **Self-RAG Post-Generation Reflection**: Bộ phản tư tự động rà soát câu trả lời của LLM trước khi xuất ra màn hình, tự động sửa lỗi và chèn cảnh báo an toàn sống còn.
+  5. **Agentic Tool Calling (`medical_tools.py`)**: Đăng ký 6 công cụ y tế chuẩn OpenAI Function Calling Schema.
+  6. **Advanced Clinical Reranker (`reranker.py`)**: Tái xếp hạng đa nhân tố loại bỏ 90% đoạn văn gây nhiễu context.
+  7. **Hybrid Multi-source Retrieval**: Kết hợp ChromaDB (Dense), Local TF-IDF (Sparse), CSDL SQLite và Logs cảm biến.
+  8. **Continuous RLHF Reinforcement**: Học tăng cường tại chỗ qua nút bấm 👍/👎 đưa vào Few-Shot In-Context Memory.
 * **Cơ chế Edge Fail-Safe Engine (High Availability)**:
   * Nếu cụm máy chủ Ollama (`qwen2:7b` / `llama3:8b`) chưa mở hoặc đang khởi động, hệ thống **không bao giờ bị crash**.
-  * Tự động chuyển mạch sang **Edge Rule-based NLP Engine**: Phân tích thực thể (Named Entity Recognition), nhận diện câu hỏi định danh ("Tôi là ai?", "Cụ là ai?"), trích xuất chỉ số sinh hiệu gần nhất từ log, và đưa ra khuyến nghị sơ cứu 115 theo chuẩn phác đồ y khoa với độ trễ 0.05 giây.
+  * Tự động chuyển mạch sang **Edge Rule-based NLP Engine**: Phân tích thực thể, trích xuất sinh hiệu gần nhất và đưa ra khuyến nghị sơ cứu 115 theo chuẩn phác đồ y khoa với độ trễ 0.05 giây.
 
 ---
 
@@ -256,59 +262,84 @@ flowchart TD
 
 ---
 
-## 📂 5. Cấu trúc Thư mục Dự án
+## 📂 5. Cấu trúc Thư mục Dự án (Clean Modular Architecture)
 
 ```text
 d:/chatbotAi/
+├── .env / .env.example            # Cấu hình môi trường (API keys, ports, paths)
 ├── README.md                      # [TÀI LIỆU NÀY] Đặc tả toàn diện hệ thống
-├── main_api.py                    # Entrypoint khởi động máy chủ FastAPI Backend
-├── web_app.py                     # Giao diện Web Dashboard Streamlit Ultra-Modern
+├── ARCHITECTURE_AND_DATA_FLOW.md  # Sơ đồ luồng dữ liệu kiến trúc
+├── main_api.py                    # Entrypoint khởi động máy chủ FastAPI Backend (< 40 dòng)
+├── web_app.py                     # Entrypoint Web Dashboard Streamlit Ultra-Modern (< 150 dòng)
 ├── run_auto_trainer.py            # Script chạy độc lập tiến trình Auto-Trainer Daemon
 ├── requirements.txt               # Danh sách toàn bộ thư viện Python của dự án
 ├── mock_sensor_data.txt           # Bộ dữ liệu mô phỏng cảm biến phục vụ test & training
 ├── system_logs.txt                # Nhật ký sự kiện thời gian thực (Ground Truth cho RAG)
 ├── test_voice.wav                 # File mẫu âm thanh kiểm thử giọng nói tiếng Việt
 │
-├── src/                           # MÃ NGUỒN CỐT LÕI (CORE SOURCE CODE)
+├── src/                           # MÃ NGUỒN CỐT LÕI (CLEAN MODULAR PACKAGES)
 │   ├── __init__.py
-│   ├── api/                       # Phân hệ Backend RESTful API
+│   ├── core/                      # ⚙️ TẦNG CỐT LÕI & CẤU HÌNH TẬP TRUNG
+│   │   ├── __init__.py
+│   │   └── config.py              # Quản lý tập trung mọi Path, URL, Hằng số sinh hiệu, LLM Key
+│   ├── rag/                       # 🛡️ TẦNG RAG NÂNG CAO (COMPOUND 8-IN-1 RAG)
+│   │   ├── __init__.py
+│   │   ├── rag_engine.py          # Master Orchestrator (< 250 dòng điều phối 8 giai đoạn)
+│   │   ├── prompts.py             # Quản lý System Prompts, hướng dẫn bác sĩ & Disclaimer
+│   │   ├── deterministic_engine.py# Cây quyết định lâm sàng ngoại tuyến 100% (Edge Fail-Safe)
+│   │   ├── retriever.py           # Hybrid Retriever điều phối Chroma Dense & TF-IDF Sparse
+│   │   ├── query_transformer.py   # Chuẩn hóa khẩu ngữ & Mở rộng Multi-Query
+│   │   ├── reranker.py            # Advanced Clinical Cross-Reranker đa nhân tố
+│   │   ├── corrective_rag.py      # CRAG Pre-Grading & Post-generation Self-RAG
+│   │   ├── medical_graph_rag.py   # Medical Knowledge Graph & Multi-hop Reasoning
+│   │   └── medical_tools.py       # OpenAI-Compatible Tool Calling Registry
+│   ├── ui/                        # 🎨 TẦNG GIAO DIỆN STREAMLIT MODULAR
+│   │   ├── __init__.py
+│   │   ├── styles.py              # Hệ thống giao diện Dark Glassmorphism, Google Fonts, CSS
+│   │   └── components/            # Các khối UI tái sử dụng
+│   │       ├── __init__.py
+│   │       ├── vitals_card.py     # Header banner và Lưới 4 thẻ sinh hiệu thông minh
+│   │       ├── chat_box.py        # Hộp chat, badge RAG, Micro STT và Modal RLHF
+│   │       ├── logs_viewer.py     # Bộ lọc và thanh cuộn xem System Audit Logs
+│   │       └── sidebar.py         # CSDL bệnh nhân, người hỏi, Edge Nodes và Báo động 115
+│   ├── api/                       # 🌐 Phân hệ Backend RESTful API (FastAPI)
 │   │   ├── __init__.py
 │   │   └── main_api.py            # Định nghĩa các routes, Pydantic schemas, CORS, LifeSpan
-│   ├── sensor_ml/                 # Phân hệ Học máy Cảm biến
+│   ├── db/                        # 🗄️ Phân hệ Cơ sở Dữ liệu
 │   │   ├── __init__.py
-│   │   ├── sensor_classifier.py   # Lớp SensorClassifier nạp model, dự đoán và tự động ghi log
+│   │   └── db_service.py          # Quản lý CSDL SQLite3, đồng bộ hồ sơ sang text doc
+│   ├── nlu/                       # 🎯 Phân hệ Xử lý Ngôn ngữ Tự nhiên
+│   │   ├── __init__.py
+│   │   └── intent_classifier.py   # Phân loại ý định y tế bằng Scikit-learn NLU
+│   ├── sensor_ml/                 # 📡 Phân hệ Học máy Cảm biến
+│   │   ├── __init__.py
+│   │   ├── sensor_classifier.py   # SensorClassifier nạp model, dự đoán và tự động ghi log
 │   │   └── train_model.py         # Huấn luyện mô hình Random Forest từ dữ liệu cảm biến
-│   ├── rag/                       # Phân hệ RAG Chống Bịa Đặt
-│   │   ├── __init__.py
-│   │   └── rag_engine.py          # RAGEngine kết hợp ChromaDB, Ollama và Edge Fail-Safe
-│   ├── voice/                     # Phân hệ Xử lý Giọng nói Tiếng Việt
+│   ├── voice/                     # 🎙️ Phân hệ Xử lý Giọng nói Tiếng Việt
 │   │   ├── __init__.py
 │   │   └── voice_service.py       # Multi-Engine STT (Google/Vosk/Whisper), Resampling & TTS
-│   ├── training/                  # Phân hệ Tự Động Huấn Luyện & RLHF
-│   │   ├── __init__.py
-│   │   ├── auto_trainer.py        # Background Daemon, Synthetic Q&A generator, retrain loop
-│   │   └── rlhf_service.py        # DPO/Alpaca dataset exporter, Few-shot In-Context Memory
-│   └── db/                        # Phân hệ Cơ sở Dữ liệu
+│   └── training/                  # 🤖 Phân hệ Tự Động Huấn Luyện & RLHF
 │       ├── __init__.py
-│       └── db_service.py          # Quản lý CSDL SQLite3, đồng bộ hồ sơ sang text doc
+│       ├── auto_trainer.py        # Background Daemon, Synthetic Q&A generator, retrain loop
+│       └── rlhf_service.py        # DPO/Alpaca dataset exporter, Few-shot In-Context Memory
 │
-├── data/                          # LƯU TRỮ DỮ LIỆU CỤC BỘ (LOCAL DATA STORAGE)
+├── data/                          # 📁 LƯU TRỮ DỮ LIỆU CỤC BỘ (LOCAL DATA STORAGE)
 │   ├── elderly_care.db            # File SQLite CSDL người dùng & hồ sơ bệnh nhân
 │   ├── medical_docs/              # Tài liệu tri thức y tế phục vụ Vector Search
-│   │   ├── elderly_first_aid.txt  # Cẩm nang phác đồ sơ cứu té ngã, sốt, tim mạch lão khoa
-│   │   └── patient_profile.txt    # Bản đồng bộ chi tiết hồ sơ bệnh nhân từ SQLite
 │   ├── training_data/             # Dữ liệu phục vụ huấn luyện tăng cường
-│   │   ├── auto_trainer_status.json # Trạng thái hoạt động của tiến trình Auto-Trainer
-│   │   ├── few_shot_examples.json   # Bộ nhớ mẫu học Few-Shot từ phản hồi người dùng
-│   │   └── rlhf_dataset.json        # Dataset xuất theo chuẩn DPO / Alpaca
 │   └── audio/                     # Thư mục lưu cache các đoạn âm thanh
 │
-├── models/                        # LƯU TRỮ CÁC MÔ HÌNH HỌC MÁY (OFFLINE MODELS)
-│   ├── sensor_rf_model.joblib     # Mô hình Random Forest đã huấn luyện của Sensor ML
-│   ├── vosk/                      # Thư mục chứa mô hình Vosk Kaldi tiếng Việt offline
-│   └── whisper/                   # Thư mục chứa mô hình Faster-Whisper
+├── models/                        # 🧠 LƯU TRỮ CÁC MÔ HÌNH HỌC MÁY (OFFLINE MODELS)
+│   ├── intent_classifier.joblib   # Mô hình phân loại ý định y tế
+│   ├── sensor_rf_model.joblib     # Mô hình Random Forest cảm biến
+│   ├── vosk/                      # Trọng số Vosk Kaldi offline
+│   └── whisper/                   # Trọng số Faster-Whisper
 │
-└── chroma_db/                     # Thư mục lưu trữ Vector Database cục bộ của Chroma
+├── chroma_db/                     # 📚 Thư mục lưu trữ Vector Database cục bộ của Chroma
+└── tests/                         # 🧪 BỘ KIỂM THỬ TỰ ĐỘNG
+    ├── evaluate_benchmark.py      # Benchmark lâm sàng toàn diện
+    ├── test_clinical_queries.py   # Kiểm thử các ca hỏi lâm sàng
+    └── test_diverse_unrelated_questions.py
 ```
 
 ---

@@ -221,18 +221,59 @@ def run_benchmark():
         print(f"   - Intent: {pred_intent} (Mong đợi: {exp_intent}, Tin cậy: {conf:.2f}) -> {'ĐÚNG' if is_intent_ok else 'SAI'}")
         print(f"   - Safety check ({must_keywords}): {'ĐẠT' if safety_ok else 'CHƯA ĐẠT'} | Latency: {lat_ms:.1f}ms")
 
-    # 2. Đánh giá Local Vector Retriever
-    print("\n⚡ [2/3] KIỂM THỬ LOCAL VECTOR RETRIEVER (COSINE SIMILARITY SEARCH)...")
+    # 2. Đánh giá Local Vector Retriever & Advanced Clinical Reranker
+    print("\n⚡ [2/4] KIỂM THỬ LOCAL RETRIEVER & ADVANCED CLINICAL RERANKER...")
     print("-" * 80)
     vec_query = "kỹ thuật bước qua vạch kẻ ảo khi chân bị dính cứng cho bệnh nhân parkinson"
-    vec_results = retriever.search(vec_query, top_k=3)
+    vec_results = retriever.search(vec_query, top_k=5)
     print(f"Truy vấn véc-tơ: '{vec_query}'")
-    print(f"Tìm thấy: {len(vec_results)} đoạn văn tương đồng hàng đầu.")
-    for i, res in enumerate(vec_results, 1):
-        print(f"   {i}. Nguồn: {res['source']} | Điểm Cosine: {res['score']:.4f} | Đoạn: '{res['text'][:80]}...'")
+    print(f"Tìm thấy: {len(vec_results)} ứng viên từ Local Retriever.")
+    
+    from src.rag.reranker import get_medical_reranker
+    reranker = get_medical_reranker()
+    reranked = reranker.rerank(vec_query, vec_results, top_k=3)
+    print(f"Sau khi qua MedicalReranker (Top 3):")
+    for i, res in enumerate(reranked, 1):
+        print(f"   {i}. Nguồn: {res['source']} | Rerank Score: {res['rerank_score']:.4f} | Khớp: {res['matched_keywords']}")
 
-    # 3. Kiểm thử Live FastAPI Endpoint
-    print("\n🌐 [3/3] KIỂM THỬ LIVE FASTAPI ENDPOINT (http://127.0.0.1:8001/api/chat)...")
+    # 3. Đánh giá Bộ Ba RAG Nâng Cao (GraphRAG, Query Transformer, CRAG & Tools)
+    print("\n🛠️ [3/4] KIỂM THỬ BỘ BA RAG NÂNG CAO (GRAPHRAG, TRANSFORMER, CRAG & TOOLS)...")
+    print("-" * 80)
+    # 3.1 GraphRAG Multi-hop
+    from src.rag.medical_graph_rag import get_medical_graph_rag
+    kg = get_medical_graph_rag()
+    trace_res = kg.trace_drug_safety("Augmentin")
+    graph_ok = (trace_res.get("is_contraindicated") is True and trace_res.get("severity") == "CRITICAL_FATAL")
+    print(f"   - [GraphRAG Multi-hop]: Suy luận bắc cầu 'Augmentin' -> 'Penicillin' -> {'ĐẠT (CHẶN NGUY HIỂM)' if graph_ok else 'THẤT BẠI'}")
+    if trace_res.get("reasoning_paths"):
+        print(f"     Path: {trace_res['reasoning_paths'][0]}")
+
+    # 3.2 Query Transformer Multi-Query
+    from src.rag.query_transformer import get_query_transformer
+    transformer = get_query_transformer()
+    t_res = transformer.normalize_and_expand("cụ tự nhiên bị đớ lưỡi một bên mặt")
+    trans_ok = (len(t_res.get("multi_queries", [])) >= 2 and any("đột quỵ" in mq for mq in t_res.get("multi_queries", [])))
+    print(f"   - [Query Transformer]: Chuẩn hóa khẩu ngữ 'đớ lưỡi' -> Thuật ngữ lâm sàng -> {'ĐẠT' if trans_ok else 'THẤT BẠI'}")
+
+    # 3.3 CRAG & Self-RAG
+    from src.rag.corrective_rag import get_corrective_rag_evaluator
+    crag = get_corrective_rag_evaluator()
+    eval_res = crag.evaluate_retrieval("đột quỵ não", ["đoạn văn mẫu"], [{"score": 0.8, "matched_keywords": ["đột quỵ"]}])
+    audit_test = crag.self_reflection_audit("uống augmentin được không", "Bạn uống augmentin được.")
+    crag_ok = (eval_res.get("grade") == "CORRECT" and audit_test.get("reflection_passed") is False)
+    print(f"   - [CRAG & Self-RAG]: Đánh giá ngữ cảnh '{eval_res.get('grade')}' & Tự phản tư an toàn -> {'ĐẠT' if crag_ok else 'THẤT BẠI'}")
+
+    # 3.4 Agentic Medical Tools
+    from src.rag.medical_tools import get_medical_tools_registry
+    tools_reg = get_medical_tools_registry()
+    tool_defs = tools_reg.get_tool_definitions()
+    allergy_test = tools_reg.execute_tool("check_drug_allergy", {"drug_name": "Amoxicillin"})
+    vitals_test = tools_reg.execute_tool("get_patient_vitals")
+    tools_ok = (allergy_test.get("status") == "DANGER" and vitals_test.get("status") == "success")
+    print(f"   - [Agentic Tools]: Đăng ký {len(tool_defs)} tools (check_drug_allergy & get_patient_vitals) -> {'ĐẠT' if tools_ok else 'THẤT BẠI'}")
+
+    # 4. Kiểm thử Live FastAPI Endpoint
+    print("\n🌐 [4/4] KIỂM THỬ LIVE FASTAPI ENDPOINT (http://127.0.0.1:8001/api/chat)...")
     print("-" * 80)
     api_ok = False
     try:
